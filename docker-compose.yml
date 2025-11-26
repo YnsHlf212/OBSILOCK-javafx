@@ -1,0 +1,67 @@
+version: '3.8'
+
+services:
+  # Base de données MySQL
+  db:
+    image: mysql:8.0
+    container_name: obsilock_db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: coffre_fort
+      MYSQL_USER: obsilock_user
+      MYSQL_PASSWORD: obsilock_pass
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - obsilock_network
+
+  # phpMyAdmin
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    container_name: obsilock_phpmyadmin
+    restart: unless-stopped
+    environment:
+      PMA_HOST: db
+      PMA_PORT: 3306
+      PMA_USER: root
+      PMA_PASSWORD: root
+    ports:
+      - "8080:80"
+    depends_on:
+      - db
+    networks:
+      - obsilock_network
+
+  # API PHP
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: obsilock_api
+    restart: unless-stopped
+    volumes:
+      - ./:/var/www/html
+    ports:
+      - "8888:80"
+    depends_on:
+      - db
+    environment:
+      DB_HOST: db
+      DB_NAME: coffre_fort
+      DB_USER: obsilock_user
+      DB_PASS: obsilock_pass
+      JWT_SECRET: mon_secret_super_securise_change_moi_32_caracteres_minimum
+    networks:
+      - obsilock_network
+
+volumes:
+  db_data:
+    driver: local
+
+networks:
+  obsilock_network:
+    driver: bridge

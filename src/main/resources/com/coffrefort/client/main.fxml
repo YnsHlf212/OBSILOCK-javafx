@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.*?>
+
+<BorderPane fx:controller="com.coffrefort.client.controllers.MainController"
+            xmlns="http://javafx.com/javafx/21.0.2" xmlns:fx="http://javafx.com/fxml/1">
+    <padding>
+        <Insets top="10" right="10" bottom="10" left="10"/>
+    </padding>
+    
+    <!-- Barre supérieure (header) -->
+    <top>
+        <HBox spacing="10" style="-fx-background-color: #f5f5f5; -fx-padding: 10; -fx-border-color: #e0e0e0; -fx-border-width: 0 0 1 0;">
+            <children>
+                <Label text="👤" style="-fx-font-size: 16px;"/>
+                <Label fx:id="userEmailLabel" text="utilisateur@example.com" style="-fx-font-weight: bold; -fx-font-size: 14px;">
+                    <HBox.margin>
+                        <Insets top="2" right="0" bottom="0" left="0"/>
+                    </HBox.margin>
+                </Label>
+                
+                <!-- Spacer pour pousser le bouton à droite -->
+                <Region HBox.hgrow="ALWAYS"/>
+                
+                <Button fx:id="logoutBtn" text="🚪 Déconnexion" onAction="#handleLogout" 
+                        style="-fx-background-color: #f44336; -fx-text-fill: white; -fx-cursor: hand;">
+                    <HBox.margin>
+                        <Insets top="0" right="0" bottom="0" left="0"/>
+                    </HBox.margin>
+                </Button>
+            </children>
+        </HBox>
+    </top>
+    
+    <left>
+        <TreeView fx:id="treeView" showRoot="false" BorderPane.alignment="CENTER_LEFT"/>
+    </left>
+    <center>
+        <TableView fx:id="table" BorderPane.alignment="CENTER">
+            <columns>
+                <TableColumn fx:id="nameCol" text="Nom" prefWidth="260"/>
+                <TableColumn fx:id="sizeCol" text="Taille" prefWidth="100"/>
+                <TableColumn fx:id="dateCol" text="Modifié le" prefWidth="150"/>
+                <TableColumn fx:id="versionCol" text="Version" prefWidth="80"/>
+            </columns>
+        </TableView>
+    </center>
+    <bottom>
+        <HBox spacing="10">
+            <padding>
+                <Insets top="10" right="0" bottom="0" left="0"/>
+            </padding>
+            <children>
+                <Button fx:id="createFolderBtn" text="📁 Nouveau dossier" onAction="#handleCreateFolder"/>
+                <Button text="📤 Uploader" onAction="#handleUpload"/>
+                <Separator orientation="VERTICAL"/>
+                <Label text="Quota:"/>
+                <ProgressBar fx:id="quotaBar" prefWidth="300"/>
+                <Label fx:id="quotaLabel"/>
+            </children>
+        </HBox>
+    </bottom>
+</BorderPane>
