@@ -8,6 +8,8 @@ import java.util.List;
  */
 public class NodeItem {
     private final String name;
+    private Integer id;
+    private Integer parentId;
     private final List<NodeItem> children = new ArrayList<>();
     private final List<FileEntry> files = new ArrayList<>();
 
@@ -31,6 +33,10 @@ public class NodeItem {
     }
 
     public String getName() { return name; }
+    public Integer getId() { return id; }
+    public void setId(Integer id) { this.id = id; }
+    public Integer getParentId() { return parentId; }
+    public void setParentId(Integer parentId) { this.parentId = parentId; }
     public List<NodeItem> getChildren() { return children; }
     public List<FileEntry> getFiles() { return files; }
 

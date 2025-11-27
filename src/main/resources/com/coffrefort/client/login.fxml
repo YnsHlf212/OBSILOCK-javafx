@@ -58,18 +58,5 @@
         <Label fx:id="errorLabel" GridPane.columnIndex="1" GridPane.rowIndex="4" 
                wrapText="true"
                style="-fx-text-fill: #f44336; -fx-font-weight: bold;"/>
-        
-        <!-- Informations de test -->
-        <VBox GridPane.columnIndex="0" GridPane.rowIndex="5" GridPane.columnSpan="2"
-              style="-fx-background-color: #E3F2FD; -fx-padding: 10; -fx-border-color: #2196F3; -fx-border-width: 1; -fx-border-radius: 5; -fx-background-radius: 5;">
-            <children>
-                <Text text="ℹ️ Informations de test" style="-fx-font-weight: bold; -fx-font-size: 12px;"/>
-                <Text text="Email: testv2@test.fr" style="-fx-font-size: 11px; -fx-fill: #666;"/>
-                <Text text="Mot de passe: Test12345!" style="-fx-font-size: 11px; -fx-fill: #666;"/>
-            </children>
-            <GridPane.margin>
-                <Insets top="20"/>
-            </GridPane.margin>
-        </VBox>
     </children>
 </GridPane>

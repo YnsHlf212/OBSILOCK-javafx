@@ -1,5 +1,20 @@
 package com.coffrefort.client.controllers;
 
+import com.coffrefort.client.ApiClient;
+import com.coffrefort.client.model.FileEntry;
+import com.coffrefort.client.model.NodeItem;
+import com.coffrefort.client.model.Quota;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.fxml.FXML;
+import javafx.scene.control.*;
+import javafx.scene.input.Clipboard;
+import javafx.scene.input.ClipboardContent;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.VBox;
+import javafx.stage.FileChooser;
+import javafx.geometry.Insets;
+
 import java.io.File;
 import java.text.DecimalFormat;
 import java.time.Instant;
@@ -8,39 +23,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-
-import com.coffrefort.client.ApiClient;
-import com.coffrefort.client.model.FileEntry;
-import com.coffrefort.client.model.NodeItem;
-import com.coffrefort.client.model.Quota;
-
-import javafx.beans.property.SimpleStringProperty;
-import javafx.fxml.FXML;
-import javafx.geometry.Insets;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Button;
-import javafx.scene.control.ButtonType;
-import javafx.scene.control.ContextMenu;
-import javafx.scene.control.Dialog;
-import javafx.scene.control.Label;
-import javafx.scene.control.MenuItem;
-import javafx.scene.control.ProgressBar;
-import javafx.scene.control.Separator;
-import javafx.scene.control.SeparatorMenuItem;
-import javafx.scene.control.TableCell;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableView;
-import javafx.scene.control.TextField;
-import javafx.scene.control.TextInputDialog;
-import javafx.scene.control.ToolBar;
-import javafx.scene.control.TreeItem;
-import javafx.scene.control.TreeView;
-import javafx.scene.input.Clipboard;
-import javafx.scene.input.ClipboardContent;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.VBox;
-import javafx.stage.FileChooser;
 
 public class MainController {
     @FXML private TreeView<NodeItem> treeView;
@@ -126,7 +108,7 @@ public class MainController {
                         setStyle("");
                     } else {
                         setText("v" + version);
-                        setStyle("-fx-alignment: CENTER; -fx-font-weight: bold;");
+                        setStyle("-fx-alignment: CENTER; -fx-text-fill: #0078d4; -fx-font-weight: bold;");
                     }
                 }
             });

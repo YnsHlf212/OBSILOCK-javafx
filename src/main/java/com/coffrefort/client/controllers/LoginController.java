@@ -36,14 +36,6 @@ public class LoginController {
         if (loadingIndicator != null) {
             loadingIndicator.setVisible(false);
         }
-        
-        // Valeurs par défaut pour les tests
-        if (emailField != null) {
-            emailField.setText("Yanis@test.fr");
-        }
-        if (passwordField != null) {
-            passwordField.setText("yanistest123");
-        }
     }
 
     @FXML
