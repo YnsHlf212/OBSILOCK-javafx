@@ -440,21 +440,21 @@ public class ApiClient {
     /**
      * DTO pour les dossiers
      */
-    public static class FolderDto {
-        public Integer id;
-        public String name;
-        public Integer parentId;
+    private static class FolderDto {
+        Integer id;
+        String name;
+        Integer parentId;
     }
     
     /**
      * DTO pour les fichiers
      */
-    public static class FileDto {
-        public String filename;
-        public long size;
-        public Integer folderId;
-        public Instant uploadedAt;
-        public int currentVersion;
+    private static class FileDto {
+        String filename;
+        long size;
+        Integer folderId;
+        Instant uploadedAt;
+        int currentVersion;
     }
 
     /**

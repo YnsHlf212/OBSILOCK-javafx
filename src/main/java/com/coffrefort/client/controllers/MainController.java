@@ -1,20 +1,5 @@
 package com.coffrefort.client.controllers;
 
-import com.coffrefort.client.ApiClient;
-import com.coffrefort.client.model.FileEntry;
-import com.coffrefort.client.model.NodeItem;
-import com.coffrefort.client.model.Quota;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.fxml.FXML;
-import javafx.scene.control.*;
-import javafx.scene.input.Clipboard;
-import javafx.scene.input.ClipboardContent;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.VBox;
-import javafx.stage.FileChooser;
-import javafx.geometry.Insets;
-
 import java.io.File;
 import java.text.DecimalFormat;
 import java.time.Instant;
@@ -23,6 +8,40 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+
+import com.coffrefort.client.ApiClient;
+import com.coffrefort.client.model.FileEntry;
+import com.coffrefort.client.model.NodeItem;
+import com.coffrefort.client.model.Quota;
+
+import javafx.beans.property.SimpleStringProperty;
+import javafx.fxml.FXML;
+import javafx.geometry.Insets;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.ContextMenu;
+import javafx.scene.control.Dialog;
+import javafx.scene.control.Label;
+import javafx.scene.control.MenuItem;
+import javafx.scene.control.ProgressBar;
+import javafx.scene.control.ProgressIndicator;
+import javafx.scene.control.Separator;
+import javafx.scene.control.SeparatorMenuItem;
+import javafx.scene.control.TableCell;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
+import javafx.scene.control.TextField;
+import javafx.scene.control.TextInputDialog;
+import javafx.scene.control.ToolBar;
+import javafx.scene.control.TreeItem;
+import javafx.scene.control.TreeView;
+import javafx.scene.input.Clipboard;
+import javafx.scene.input.ClipboardContent;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.VBox;
+import javafx.stage.FileChooser;
 
 public class MainController {
     @FXML private TreeView<NodeItem> treeView;
@@ -1009,6 +1028,12 @@ public class MainController {
      * Crée un nouveau dossier dans le dossier actuellement sélectionné
      */
     private void createNewFolder() {
+        System.out.println("\n=== createNewFolder() appelée ===");
+        System.out.println("currentFolder: " + (currentFolder != null ? currentFolder.getName() : "null"));
+        System.out.println("currentFolder ID: " + (currentFolder != null ? currentFolder.getId() : "null"));
+        System.out.println("apiClient: " + (apiClient != null ? "initialized" : "null"));
+        System.out.println("apiClient.isAuthenticated(): " + (apiClient != null ? apiClient.isAuthenticated() : "N/A"));
+        
         // Dialogue pour saisir le nom du dossier
         TextInputDialog dialog = new TextInputDialog("Nouveau dossier");
         dialog.setTitle("Créer un dossier");
@@ -1032,33 +1057,263 @@ public class MainController {
         });
 
         Optional<String> result = dialog.showAndWait();
+        System.out.println("Dialog result: " + result.isPresent());
+        
         result.ifPresent(folderName -> {
             String trimmedName = folderName.trim();
+            System.out.println("Nom du dossier saisi: " + trimmedName);
+            
             if (!trimmedName.isEmpty()) {
-                // Vérifier si un dossier avec ce nom existe déjà
-                if (currentFolder != null && folderExists(trimmedName, currentFolder)) {
-                    Alert error = new Alert(Alert.AlertType.ERROR);
-                    error.setTitle("Erreur");
-                    error.setHeaderText("Dossier existant");
-                    error.setContentText("Un dossier nommé '" + trimmedName + "' existe déjà dans ce dossier.");
-                    error.showAndWait();
-                    return;
-                }
-
-                // TODO: Appeler l'API pour créer le dossier
-                createFolderOnServer(trimmedName);
-                
-                // Simulation : créer localement le dossier
-                if (currentFolder != null) {
-                    NodeItem newFolder = NodeItem.folder(trimmedName);
-                    currentFolder.getChildren().add(newFolder);
-                    
-                    // Rafraîchir l'arborescence
-                    loadData();
-                    showStatus("Dossier créé : " + trimmedName);
-                }
+                System.out.println("Appel de createFolderAsync()...");
+                // Appeler l'API pour créer le dossier de manière asynchrone
+                createFolderAsync(trimmedName);
+            } else {
+                System.out.println("Nom vide, annulation");
             }
         });
+    }
+
+    /**
+     * Crée un dossier de manière asynchrone
+     */
+    private void createFolderAsync(String folderName) {
+        System.out.println("\n=== createFolderAsync() appelée ===");
+        System.out.println("Nom du dossier: " + folderName);
+        System.out.println("Parent ID: " + (currentFolder != null ? currentFolder.getId() : "null"));
+        
+        // Créer un dialogue de progression
+        Alert progressAlert = new Alert(Alert.AlertType.INFORMATION);
+        progressAlert.setTitle("Création en cours");
+        progressAlert.setHeaderText("Création du dossier : " + folderName);
+        progressAlert.setContentText("Veuillez patienter...");
+        
+        ProgressIndicator progressIndicator = new ProgressIndicator();
+        progressIndicator.setProgress(ProgressIndicator.INDETERMINATE_PROGRESS);
+        progressAlert.setGraphic(progressIndicator);
+        
+        // Retirer le bouton OK pour empêcher la fermeture
+        progressAlert.getButtonTypes().clear();
+        
+        // Afficher le dialogue sans bloquer
+        progressAlert.show();
+        System.out.println("Dialog de progression affiché");
+        
+        // Récupérer le parent_id du dossier sélectionné
+        Integer parentId = currentFolder != null ? currentFolder.getId() : null;
+        
+        // Créer une Task pour la création
+        javafx.concurrent.Task<Integer> createTask = new javafx.concurrent.Task<>() {
+            @Override
+            protected Integer call() throws Exception {
+                System.out.println("\n=== Task.call() exécutée ===");
+                System.out.println("Thread: " + Thread.currentThread().getName());
+                System.out.println("Appel apiClient.createFolder(\"" + folderName + "\", " + parentId + ")");
+                
+                try {
+                    Integer result = apiClient.createFolder(folderName, parentId);
+                    System.out.println("Résultat: " + result);
+                    return result;
+                } catch (Exception e) {
+                    System.err.println("Exception dans Task.call(): " + e.getMessage());
+                    e.printStackTrace();
+                    throw e;
+                }
+            }
+        };
+        
+        // Gestion du succès
+        createTask.setOnSucceeded(event -> {
+            System.out.println("\n=== Task SUCCEEDED ===");
+            progressAlert.close();
+            
+            Integer folderId = createTask.getValue();
+            System.out.println("ID du dossier créé: " + folderId);
+            
+            Alert success = new Alert(Alert.AlertType.INFORMATION);
+            success.setTitle("Dossier créé");
+            success.setHeaderText("Dossier créé avec succès");
+            success.setContentText("Le dossier '" + folderName + "' a été créé.\n" +
+                                  (folderId != null ? "ID: " + folderId : ""));
+            success.showAndWait();
+            
+            // Rafraîchir l'affichage
+            System.out.println("Rafraîchissement de l'affichage...");
+            loadData();
+            showStatus("Dossier créé : " + folderName);
+        });
+        
+        // Gestion des erreurs
+        createTask.setOnFailed(event -> {
+            System.err.println("\n=== Task FAILED ===");
+            progressAlert.close();
+            
+            Throwable exception = createTask.getException();
+            System.err.println("Exception: " + (exception != null ? exception.getClass().getName() : "null"));
+            System.err.println("Message: " + (exception != null ? exception.getMessage() : "null"));
+            
+            String errorMessage = "Erreur lors de la création du dossier";
+            
+            if (exception != null) {
+                exception.printStackTrace();
+                String exMsg = exception.getMessage();
+                
+                if (exMsg != null) {
+                    if (exMsg.contains("409")) {
+                        errorMessage = "Un dossier avec ce nom existe déjà.";
+                    } else if (exMsg.contains("400")) {
+                        errorMessage = "Nom de dossier invalide.";
+                    } else if (exMsg.contains("401")) {
+                        errorMessage = "Session expirée. Veuillez vous reconnecter.";
+                    } else if (exMsg.contains("404")) {
+                        errorMessage = "Endpoint introuvable. Vérifiez l'URL du serveur.";
+                    } else if (exMsg.contains("500")) {
+                        errorMessage = "Erreur interne du serveur.";
+                    } else if (exMsg.contains("ConnectException") || exMsg.contains("Connection refused")) {
+                        errorMessage = "Impossible de contacter le serveur.\nVérifiez que le backend est démarré.";
+                    } else if (exMsg.contains("timeout")) {
+                        errorMessage = "Délai d'attente dépassé.\nLe serveur ne répond pas.";
+                    } else {
+                        errorMessage = "Erreur: " + exMsg;
+                    }
+                }
+            }
+            
+            Alert error = new Alert(Alert.AlertType.ERROR);
+            error.setTitle("Erreur");
+            error.setHeaderText("Impossible de créer le dossier");
+            error.setContentText(errorMessage);
+            error.showAndWait();
+            
+            showStatus("Échec de la création : " + folderName);
+        });
+        
+        // Démarrer la tâche dans un thread séparé
+        Thread thread = new Thread(createTask, "create-folder-task-thread");
+        thread.setDaemon(true);
+        System.out.println("Démarrage du thread...");
+        thread.start();
+        System.out.println("Thread démarré");
+    }
+
+    /**
+     * Upload un fichier de manière asynchrone
+     */
+    private void uploadFileAsync(File file) {
+        System.out.println("\n=== uploadFileAsync() appelée ===");
+        System.out.println("Fichier: " + file.getName());
+        System.out.println("Taille: " + file.length());
+        System.out.println("Parent ID: " + (currentFolder != null ? currentFolder.getId() : "null"));
+        
+        // Créer un dialogue de progression
+        Alert progressAlert = new Alert(Alert.AlertType.INFORMATION);
+        progressAlert.setTitle("Upload en cours");
+        progressAlert.setHeaderText("Upload de : " + file.getName());
+        progressAlert.setContentText("Veuillez patienter...");
+        
+        ProgressIndicator progressIndicator = new ProgressIndicator();
+        progressIndicator.setProgress(ProgressIndicator.INDETERMINATE_PROGRESS);
+        progressAlert.setGraphic(progressIndicator);
+        
+        // Retirer le bouton OK pour empêcher la fermeture
+        progressAlert.getButtonTypes().clear();
+        
+        // Afficher le dialogue sans bloquer
+        progressAlert.show();
+        System.out.println("Dialog de progression affiché");
+        
+        // Récupérer le folder_id du dossier sélectionné
+        Integer folderId = currentFolder != null ? currentFolder.getId() : null;
+        
+        // Créer une Task pour l'upload
+        javafx.concurrent.Task<Integer> uploadTask = new javafx.concurrent.Task<>() {
+            @Override
+            protected Integer call() throws Exception {
+                System.out.println("\n=== Upload Task.call() exécutée ===");
+                System.out.println("Thread: " + Thread.currentThread().getName());
+                System.out.println("Appel apiClient.uploadFile()");
+                
+                try {
+                    Integer result = apiClient.uploadFile(file, folderId);
+                    System.out.println("Résultat: " + result);
+                    return result;
+                } catch (Exception e) {
+                    System.err.println("Exception dans Upload Task.call(): " + e.getMessage());
+                    e.printStackTrace();
+                    throw e;
+                }
+            }
+        };
+        
+        // Gestion du succès
+        uploadTask.setOnSucceeded(event -> {
+            System.out.println("\n=== Upload Task SUCCEEDED ===");
+            progressAlert.close();
+            
+            Integer fileId = uploadTask.getValue();
+            System.out.println("ID du fichier: " + fileId);
+            
+            Alert success = new Alert(Alert.AlertType.INFORMATION);
+            success.setTitle("Upload réussi");
+            success.setHeaderText("Fichier uploadé avec succès");
+            success.setContentText("Le fichier '" + file.getName() + "' a été uploadé.\n" +
+                                  (fileId != null ? "ID: " + fileId : ""));
+            success.showAndWait();
+            
+            // Rafraîchir l'affichage
+            System.out.println("Rafraîchissement de l'affichage...");
+            loadData();
+            showStatus("Fichier uploadé : " + file.getName());
+        });
+        
+        // Gestion des erreurs
+        uploadTask.setOnFailed(event -> {
+            System.err.println("\n=== Upload Task FAILED ===");
+            progressAlert.close();
+            
+            Throwable exception = uploadTask.getException();
+            System.err.println("Exception: " + (exception != null ? exception.getClass().getName() : "null"));
+            System.err.println("Message: " + (exception != null ? exception.getMessage() : "null"));
+            
+            String errorMessage = "Erreur lors de l'upload";
+            
+            if (exception != null) {
+                exception.printStackTrace();
+                String exMsg = exception.getMessage();
+                
+                if (exMsg != null) {
+                    if (exMsg.contains("413")) {
+                        errorMessage = "Fichier trop volumineux.\nLa taille maximale autorisée est dépassée.";
+                    } else if (exMsg.contains("415")) {
+                        errorMessage = "Type de fichier non autorisé.";
+                    } else if (exMsg.contains("507")) {
+                        errorMessage = "Espace de stockage insuffisant.";
+                    } else if (exMsg.contains("401")) {
+                        errorMessage = "Session expirée. Veuillez vous reconnecter.";
+                    } else if (exMsg.contains("ConnectException") || exMsg.contains("Connection refused")) {
+                        errorMessage = "Impossible de contacter le serveur.\nVérifiez que le backend est démarré.";
+                    } else if (exMsg.contains("timeout")) {
+                        errorMessage = "Délai d'attente dépassé.\nLe fichier est peut-être trop volumineux.";
+                    } else {
+                        errorMessage = "Erreur: " + exMsg;
+                    }
+                }
+            }
+            
+            Alert error = new Alert(Alert.AlertType.ERROR);
+            error.setTitle("Erreur d'upload");
+            error.setHeaderText("Impossible d'uploader le fichier");
+            error.setContentText(errorMessage);
+            error.showAndWait();
+            
+            showStatus("Échec de l'upload : " + file.getName());
+        });
+        
+        // Démarrer la tâche dans un thread séparé
+        Thread thread = new Thread(uploadTask, "upload-task-thread");
+        thread.setDaemon(true);
+        System.out.println("Démarrage du thread upload...");
+        thread.start();
+        System.out.println("Thread upload démarré");
     }
 
     /**
