@@ -3,60 +3,111 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.*?>
+<?import javafx.scene.image.*?>
 
-<GridPane fx:controller="com.coffrefort.client.controllers.LoginController"
-          xmlns="http://javafx.com/javafx/21.0.2" xmlns:fx="http://javafx.com/fxml/1"
-          hgap="10" vgap="10" style="-fx-background-color: #f5f5f5;">
-    <padding>
-        <Insets top="40" right="40" bottom="40" left="40"/>
-    </padding>
-    <columnConstraints>
-        <ColumnConstraints halignment="RIGHT" minWidth="120"/>
-        <ColumnConstraints hgrow="ALWAYS" minWidth="250"/>
-    </columnConstraints>
-    <children>
-        <!-- Titre -->
-        <VBox GridPane.columnIndex="0" GridPane.rowIndex="0" GridPane.columnSpan="2" 
-              alignment="CENTER" spacing="5">
-            <children>
-                <Text text="🔐 Coffre-fort numérique" style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-fill: #1976D2;"/>
-                <Text text="Connexion sécurisée" style="-fx-font-size: 14px; -fx-fill: #666;"/>
-            </children>
-            <GridPane.margin>
-                <Insets bottom="20"/>
-            </GridPane.margin>
-        </VBox>
-
-        <!-- Email -->
-        <Label text="Email" GridPane.columnIndex="0" GridPane.rowIndex="1" 
-               style="-fx-font-weight: bold;"/>
-        <TextField fx:id="emailField" GridPane.columnIndex="1" GridPane.rowIndex="1"
-                   promptText="votre.email@example.com"
-                   style="-fx-font-size: 13px;"/>
-
-        <!-- Mot de passe -->
-        <Label text="Mot de passe" GridPane.columnIndex="0" GridPane.rowIndex="2"
-               style="-fx-font-weight: bold;"/>
-        <PasswordField fx:id="passwordField" GridPane.columnIndex="1" GridPane.rowIndex="2"
-                       promptText="Votre mot de passe"
-                       style="-fx-font-size: 13px;"/>
-
-        <!-- Bouton de connexion et indicateur -->
-        <HBox spacing="10" alignment="CENTER_RIGHT" GridPane.columnIndex="1" GridPane.rowIndex="3">
-            <children>
-                <ProgressIndicator fx:id="loadingIndicator" prefWidth="20" prefHeight="20" visible="false"/>
-                <Button fx:id="loginButton" text="Se connecter" defaultButton="true" 
-                        onAction="#handleLogin"
-                        style="-fx-background-color: #1976D2; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 10 20; -fx-cursor: hand;"/>
-            </children>
-            <GridPane.margin>
-                <Insets top="10"/>
-            </GridPane.margin>
+<VBox fx:controller="com.coffrefort.client.controllers.LoginController"
+      xmlns="http://javafx.com/javafx/21.0.2" xmlns:fx="http://javafx.com/fxml/1"
+      alignment="CENTER" spacing="20" 
+      style="-fx-background-color: #15161A; -fx-padding: 40;">
+    
+    <!-- Logo Section -->
+    <VBox alignment="CENTER" spacing="15">
+        <!-- Logo Image -->
+        <ImageView fitHeight="100" fitWidth="100" preserveRatio="true">
+            <image>
+                <Image url="@BCO.png"/>
+            </image>
+        </ImageView>
+        
+        <!-- Title -->
+        <Text text="ObsiLock" 
+              style="-fx-font-size: 42px; -fx-font-weight: bold; -fx-fill: #8ECB18; -fx-font-family: 'Arial';">
+        </Text>
+        
+        <Text text="Connexion à votre" 
+              style="-fx-font-size: 18px; -fx-fill: #ffffff; -fx-font-weight: 300;">
+        </Text>
+        <Text text="espace sécurisé" 
+              style="-fx-font-size: 18px; -fx-fill: #ffffff; -fx-font-weight: 300;">
+        </Text>
+    </VBox>
+    
+    <VBox spacing="15" alignment="CENTER" maxWidth="350">
+        <!-- Email Field -->
+        <TextField fx:id="emailField" 
+                   promptText="Email"
+                   prefWidth="350" prefHeight="45"
+                   style="-fx-background-color: #5a5a5a; 
+                          -fx-text-fill: #ffffff; 
+                          -fx-prompt-text-fill: #a0a0a0;
+                          -fx-background-radius: 5;
+                          -fx-font-size: 14px;
+                          -fx-padding: 10 15;"/>
+        
+        <!-- Password Field -->
+        <HBox alignment="CENTER_LEFT" spacing="0" prefWidth="350" prefHeight="45"
+              style="-fx-background-color: #5a5a5a; -fx-background-radius: 5;">
+            <PasswordField fx:id="passwordField" 
+                           promptText="Mot de Passe"
+                           HBox.hgrow="ALWAYS"
+                           style="-fx-background-color: transparent; 
+                                  -fx-text-fill: #ffffff; 
+                                  -fx-prompt-text-fill: #a0a0a0;
+                                  -fx-font-size: 14px;
+                                  -fx-padding: 10 5 10 15;
+                                  -fx-background-insets: 0;
+                                  -fx-border-width: 0;"/>
+            <TextField fx:id="passwordTextField" 
+                       promptText="Mot de Passe"
+                       HBox.hgrow="ALWAYS"
+                       visible="false"
+                       managed="false"
+                       style="-fx-background-color: transparent; 
+                              -fx-text-fill: #ffffff; 
+                              -fx-prompt-text-fill: #a0a0a0;
+                              -fx-font-size: 14px;
+                              -fx-padding: 10 5 10 15;
+                              -fx-background-insets: 0;
+                              -fx-border-width: 0;"/>
+            <Label fx:id="togglePasswordButton"
+                    text="👁"
+                    style="-fx-background-color: transparent; 
+                           -fx-text-fill: #a0a0a0;
+                           -fx-font-size: 18px;
+                           -fx-cursor: hand;
+                           -fx-padding: 10 15 10 10;">
+            </Label>
         </HBox>
-
-        <!-- Message d'erreur -->
-        <Label fx:id="errorLabel" GridPane.columnIndex="1" GridPane.rowIndex="4" 
+        
+        <!-- Login Button -->
+        <HBox alignment="CENTER" spacing="10">
+            <ProgressIndicator fx:id="loadingIndicator" prefWidth="20" prefHeight="20" visible="false"/>
+            <Button fx:id="loginButton" 
+                    text="Se Connecter" 
+                    defaultButton="true"
+                    onAction="#handleLogin"
+                    prefWidth="350" prefHeight="45"
+                    style="-fx-background-color: #8ECB18; 
+                           -fx-text-fill: #1a1a1a; 
+                           -fx-font-weight: bold; 
+                           -fx-font-size: 15px;
+                           -fx-background-radius: 5;
+                           -fx-cursor: hand;">
+            </Button>
+        </HBox>
+        
+        <!-- Forgot Password Link -->
+        <Hyperlink text="Mot de passe oublié ?" 
+                   style="-fx-text-fill: #a0a0a0; -fx-font-size: 12px; -fx-underline: false;"/>
+        
+        <!-- Create Account Link -->
+        <Hyperlink text="Créer un compte" 
+                   style="-fx-text-fill: #a0a0a0; -fx-font-size: 12px; -fx-underline: false;"/>
+        
+        <!-- Error Label -->
+        <Label fx:id="errorLabel" 
                wrapText="true"
-               style="-fx-text-fill: #f44336; -fx-font-weight: bold;"/>
-    </children>
-</GridPane>
+               style="-fx-text-fill: #ff5252; -fx-font-weight: bold; -fx-font-size: 13px;"/>
+    </VBox>
+    
+</VBox>

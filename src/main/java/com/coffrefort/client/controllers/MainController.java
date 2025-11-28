@@ -917,11 +917,23 @@ public class MainController {
 
         Optional<ButtonType> result = confirm.showAndWait();
         if (result.isPresent() && result.get() == ButtonType.OK) {
-            // TODO: Appeler l'API pour invalider le token si nécessaire
-            // apiClient.logout();
-            
-            // Retour à l'écran de connexion
-            returnToLoginScreen();
+            try {
+                // Nettoyer le token d'authentification
+                apiClient.clearToken();
+                System.out.println("Token nettoyé, déconnexion effectuée");
+                
+                // Retour à l'écran de connexion
+                returnToLoginScreen();
+            } catch (Exception e) {
+                System.err.println("Erreur lors de la déconnexion: " + e.getMessage());
+                e.printStackTrace();
+                
+                Alert error = new Alert(Alert.AlertType.ERROR);
+                error.setTitle("Erreur");
+                error.setHeaderText("Erreur lors de la déconnexion");
+                error.setContentText(e.getMessage());
+                error.showAndWait();
+            }
         }
     }
 
@@ -934,6 +946,26 @@ public class MainController {
             javafx.fxml.FXMLLoader loader = new javafx.fxml.FXMLLoader(
                 getClass().getResource("/com/coffrefort/client/login.fxml")
             );
+            
+            // IMPORTANT: Configurer le controller factory pour injecter l'ApiClient
+            loader.setControllerFactory(type -> {
+                if (type == LoginController.class) {
+                    LoginController controller = new LoginController();
+                    controller.setApiClient(apiClient); // Réutiliser l'ApiClient existant
+                    controller.setOnSuccess((email) -> {
+                        // Stocker l'email
+                        userEmail = email;
+                        // Ouvrir à nouveau la fenêtre principale
+                        openMainWindow();
+                    });
+                    return controller;
+                }
+                try {
+                    return type.getDeclaredConstructor().newInstance();
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            });
             
             javafx.scene.Parent root = loader.load();
             
@@ -950,6 +982,9 @@ public class MainController {
             loginStage.show();
             
         } catch (Exception e) {
+            System.err.println("Erreur lors du retour à l'écran de connexion:");
+            e.printStackTrace();
+            
             Alert error = new Alert(Alert.AlertType.ERROR);
             error.setTitle("Erreur");
             error.setHeaderText("Impossible de retourner à l'écran de connexion");
@@ -957,6 +992,62 @@ public class MainController {
             error.showAndWait();
         }
     }
+
+    /**
+     * Ouvre la fenêtre principale après reconnexion
+     */
+    private void openMainWindow() {
+        try {
+            javafx.fxml.FXMLLoader loader = new javafx.fxml.FXMLLoader(
+                getClass().getResource("/com/coffrefort/client/main.fxml")
+            );
+            
+            loader.setControllerFactory(type -> {
+                if (type == MainController.class) {
+                    MainController controller = new MainController();
+                    controller.setApiClient(apiClient);
+                    controller.setUserEmail(userEmail);
+                    return controller;
+                }
+                try {
+                    return type.getDeclaredConstructor().newInstance();
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            });
+            
+            javafx.scene.Parent root = loader.load();
+            
+            javafx.stage.Stage mainStage = new javafx.stage.Stage();
+            mainStage.setTitle("Coffre-fort — Espace personnel");
+            mainStage.setScene(new javafx.scene.Scene(root, 1024, 680));
+            
+            // Fermer la fenêtre de login actuelle
+            javafx.stage.Stage loginStage = (javafx.stage.Stage) 
+                javafx.stage.Stage.getWindows().stream()
+                    .filter(w -> w instanceof javafx.stage.Stage)
+                    .findFirst()
+                    .orElse(null);
+            
+            if (loginStage != null) {
+                loginStage.close();
+            }
+            
+            mainStage.show();
+            
+        } catch (Exception e) {
+            System.err.println("Erreur lors de l'ouverture de la fenêtre principale:");
+            e.printStackTrace();
+            
+            Alert error = new Alert(Alert.AlertType.ERROR);
+            error.setTitle("Erreur");
+            error.setHeaderText("Impossible d'ouvrir la fenêtre principale");
+            error.setContentText(e.getMessage());
+            error.showAndWait();
+        }
+    }
+
+
 
     /**
      * Affiche un message de statut (à améliorer avec un vrai bandeau)
@@ -1124,67 +1215,89 @@ public class MainController {
         // Gestion du succès
         createTask.setOnSucceeded(event -> {
             System.out.println("\n=== Task SUCCEEDED ===");
-            progressAlert.close();
             
-            Integer folderId = createTask.getValue();
-            System.out.println("ID du dossier créé: " + folderId);
-            
-            Alert success = new Alert(Alert.AlertType.INFORMATION);
-            success.setTitle("Dossier créé");
-            success.setHeaderText("Dossier créé avec succès");
-            success.setContentText("Le dossier '" + folderName + "' a été créé.\n" +
-                                  (folderId != null ? "ID: " + folderId : ""));
-            success.showAndWait();
-            
-            // Rafraîchir l'affichage
-            System.out.println("Rafraîchissement de l'affichage...");
-            loadData();
-            showStatus("Dossier créé : " + folderName);
+            // IMPORTANT: Utiliser Platform.runLater pour s'assurer que la fermeture se fait sur le thread JavaFX
+            javafx.application.Platform.runLater(() -> {
+                try {
+                    System.out.println("Fermeture du dialogue de progression...");
+                    progressAlert.close();
+                    System.out.println("Dialogue fermé");
+                    
+                    Integer folderId = createTask.getValue();
+                    System.out.println("ID du dossier créé: " + folderId);
+                    
+                    Alert success = new Alert(Alert.AlertType.INFORMATION);
+                    success.setTitle("Dossier créé");
+                    success.setHeaderText("Dossier créé avec succès");
+                    success.setContentText("Le dossier '" + folderName + "' a été créé.\n" +
+                                        (folderId != null ? "ID: " + folderId : ""));
+                    success.showAndWait();
+                    
+                    // Rafraîchir l'affichage
+                    System.out.println("Rafraîchissement de l'affichage...");
+                    loadData();
+                    showStatus("Dossier créé : " + folderName);
+                } catch (Exception e) {
+                    System.err.println("Erreur dans Platform.runLater (success): " + e.getMessage());
+                    e.printStackTrace();
+                }
+            });
         });
         
         // Gestion des erreurs
         createTask.setOnFailed(event -> {
             System.err.println("\n=== Task FAILED ===");
-            progressAlert.close();
             
-            Throwable exception = createTask.getException();
-            System.err.println("Exception: " + (exception != null ? exception.getClass().getName() : "null"));
-            System.err.println("Message: " + (exception != null ? exception.getMessage() : "null"));
-            
-            String errorMessage = "Erreur lors de la création du dossier";
-            
-            if (exception != null) {
-                exception.printStackTrace();
-                String exMsg = exception.getMessage();
-                
-                if (exMsg != null) {
-                    if (exMsg.contains("409")) {
-                        errorMessage = "Un dossier avec ce nom existe déjà.";
-                    } else if (exMsg.contains("400")) {
-                        errorMessage = "Nom de dossier invalide.";
-                    } else if (exMsg.contains("401")) {
-                        errorMessage = "Session expirée. Veuillez vous reconnecter.";
-                    } else if (exMsg.contains("404")) {
-                        errorMessage = "Endpoint introuvable. Vérifiez l'URL du serveur.";
-                    } else if (exMsg.contains("500")) {
-                        errorMessage = "Erreur interne du serveur.";
-                    } else if (exMsg.contains("ConnectException") || exMsg.contains("Connection refused")) {
-                        errorMessage = "Impossible de contacter le serveur.\nVérifiez que le backend est démarré.";
-                    } else if (exMsg.contains("timeout")) {
-                        errorMessage = "Délai d'attente dépassé.\nLe serveur ne répond pas.";
-                    } else {
-                        errorMessage = "Erreur: " + exMsg;
+            // IMPORTANT: Utiliser Platform.runLater pour s'assurer que la fermeture se fait sur le thread JavaFX
+            javafx.application.Platform.runLater(() -> {
+                try {
+                    System.out.println("Fermeture du dialogue de progression (erreur)...");
+                    progressAlert.close();
+                    System.out.println("Dialogue fermé");
+                    
+                    Throwable exception = createTask.getException();
+                    System.err.println("Exception: " + (exception != null ? exception.getClass().getName() : "null"));
+                    System.err.println("Message: " + (exception != null ? exception.getMessage() : "null"));
+                    
+                    String errorMessage = "Erreur lors de la création du dossier";
+                    
+                    if (exception != null) {
+                        exception.printStackTrace();
+                        String exMsg = exception.getMessage();
+                        
+                        if (exMsg != null) {
+                            if (exMsg.contains("409")) {
+                                errorMessage = "Un dossier avec ce nom existe déjà.";
+                            } else if (exMsg.contains("400")) {
+                                errorMessage = "Nom de dossier invalide.";
+                            } else if (exMsg.contains("401")) {
+                                errorMessage = "Session expirée. Veuillez vous reconnecter.";
+                            } else if (exMsg.contains("404")) {
+                                errorMessage = "Endpoint introuvable. Vérifiez l'URL du serveur.";
+                            } else if (exMsg.contains("500")) {
+                                errorMessage = "Erreur interne du serveur.";
+                            } else if (exMsg.contains("ConnectException") || exMsg.contains("Connection refused")) {
+                                errorMessage = "Impossible de contacter le serveur.\nVérifiez que le backend est démarré.";
+                            } else if (exMsg.contains("timeout")) {
+                                errorMessage = "Délai d'attente dépassé.\nLe serveur ne répond pas.";
+                            } else {
+                                errorMessage = "Erreur: " + exMsg;
+                            }
+                        }
                     }
+                    
+                    Alert error = new Alert(Alert.AlertType.ERROR);
+                    error.setTitle("Erreur");
+                    error.setHeaderText("Impossible de créer le dossier");
+                    error.setContentText(errorMessage);
+                    error.showAndWait();
+                    
+                    showStatus("Échec de la création : " + folderName);
+                } catch (Exception e) {
+                    System.err.println("Erreur dans Platform.runLater (error): " + e.getMessage());
+                    e.printStackTrace();
                 }
-            }
-            
-            Alert error = new Alert(Alert.AlertType.ERROR);
-            error.setTitle("Erreur");
-            error.setHeaderText("Impossible de créer le dossier");
-            error.setContentText(errorMessage);
-            error.showAndWait();
-            
-            showStatus("Échec de la création : " + folderName);
+            });
         });
         
         // Démarrer la tâche dans un thread séparé
