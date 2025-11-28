@@ -1,21 +1,30 @@
 package com.coffrefort.client;
 
-import com.coffrefort.client.model.FileEntry;
-import com.coffrefort.client.model.NodeItem;
-import com.coffrefort.client.model.Quota;
-import javafx.geometry.Insets;
-import javafx.scene.Node;
-import javafx.scene.control.*;
-import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.HBox;
-import javafx.stage.FileChooser;
-
 import java.io.File;
 import java.text.DecimalFormat;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+
+import com.coffrefort.client.model.FileEntry;
+import com.coffrefort.client.model.NodeItem;
+import com.coffrefort.client.model.Quota;
+
+import javafx.geometry.Insets;
+import javafx.scene.Node;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.ProgressBar;
+import javafx.scene.control.TableCell;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
+import javafx.scene.control.TreeItem;
+import javafx.scene.control.TreeView;
+import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
+import javafx.stage.FileChooser;
 
 /**
  * Fenêtre principale simplifiée: à gauche l'arborescence, à droite la liste de fichiers,
