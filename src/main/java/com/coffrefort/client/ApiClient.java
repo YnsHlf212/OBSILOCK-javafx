@@ -196,6 +196,9 @@ public class ApiClient {
     private FileDto parseFileDto(JsonNode fileNode) {
         FileDto file = new FileDto();
         
+        file.id = fileNode.has("id") && !fileNode.get("id").isNull() ? 
+            fileNode.get("id").asInt() : null;
+        
         file.filename = fileNode.has("filename") ? fileNode.get("filename").asText() : 
                        fileNode.has("original_name") ? fileNode.get("original_name").asText() : "Sans nom";
         
@@ -274,6 +277,7 @@ public class ApiClient {
             // 6. Ajouter les fichiers dans leurs dossiers respectifs
             for (FileDto file : allFiles) {
                 FileEntry fileEntry = FileEntry.of(
+                    file.id,
                     file.filename, 
                     file.size, 
                     file.uploadedAt, 
@@ -430,6 +434,64 @@ public class ApiClient {
     }
 
     /**
+     * Supprime un fichier
+     * DELETE /files/{id}
+     * @param fileId ID du fichier à supprimer
+     * @throws IOException En cas d'erreur réseau
+     */
+    public void deleteFile(Integer fileId) throws IOException {
+        if (!isAuthenticated()) {
+            throw new IOException("Non authentifié. Veuillez vous connecter d'abord.");
+        }
+        
+        if (fileId == null) {
+            throw new IOException("ID du fichier invalide");
+        }
+        
+        Request request = new Request.Builder()
+            .url(baseUrl + "files/" + fileId)
+            .delete()
+            .addHeader("Authorization", "Bearer " + authToken)
+            .build();
+        
+        try (Response response = httpClient.newCall(request).execute()) {
+            if (!response.isSuccessful()) {
+                String errorBody = response.body() != null ? response.body().string() : "";
+                throw new IOException("Échec de la suppression du fichier: " + response.code() + " - " + errorBody);
+            }
+        }
+    }
+
+    /**
+     * Supprime un dossier (et tous les fichiers qu'il contient)
+     * DELETE /folders/{id}
+     * @param folderId ID du dossier à supprimer
+     * @throws IOException En cas d'erreur réseau
+     */
+    public void deleteFolder(Integer folderId) throws IOException {
+        if (!isAuthenticated()) {
+            throw new IOException("Non authentifié. Veuillez vous connecter d'abord.");
+        }
+        
+        if (folderId == null) {
+            throw new IOException("ID du dossier invalide");
+        }
+        
+        Request request = new Request.Builder()
+            .url(baseUrl + "folders/" + folderId)
+            .delete()
+            .addHeader("Authorization", "Bearer " + authToken)
+            .build();
+        
+        try (Response response = httpClient.newCall(request).execute()) {
+            if (!response.isSuccessful()) {
+                String errorBody = response.body() != null ? response.body().string() : "";
+                throw new IOException("Échec de la suppression du dossier: " + response.code() + " - " + errorBody);
+            }
+        }
+    }
+
+    /**
      * Quota simulé: 2 Go max, 350 Mo utilisés.
      * TODO: Remplacer par un vrai appel API
      */
@@ -450,6 +512,7 @@ public class ApiClient {
      * DTO pour les fichiers
      */
     private static class FileDto {
+        Integer id;
         String filename;
         long size;
         Integer folderId;

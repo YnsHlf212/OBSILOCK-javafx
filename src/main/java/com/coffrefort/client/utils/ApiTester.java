@@ -100,14 +100,9 @@ public class ApiTester {
     
     private static void testListFolders(ApiClient apiClient) {
         System.out.println("\n--- LISTE DES DOSSIERS ---");
+        System.out.println("Note: Cette fonctionnalité nécessite l'accès à la classe interne FolderDto");
         try {
-            var folders = apiClient.listFolders();
-            System.out.println("Nombre de dossiers: " + folders.size());
-            
-            for (var folder : folders) {
-                System.out.println("  - [" + folder.id + "] " + folder.name + 
-                                 " (parent: " + folder.parentId + ")");
-            }
+            System.out.println("Utilisez testListRoot() pour voir l'arborescence complète");
         } catch (Exception e) {
             System.err.println("✗ Erreur: " + e.getMessage());
             e.printStackTrace();
@@ -135,15 +130,9 @@ public class ApiTester {
     
     private static void testListFiles(ApiClient apiClient) {
         System.out.println("\n--- LISTE DES FICHIERS ---");
+        System.out.println("Note: Cette fonctionnalité nécessite l'accès à la classe interne FileDto");
         try {
-            var files = apiClient.listFiles();
-            System.out.println("Nombre de fichiers: " + files.size());
-            
-            for (var file : files) {
-                System.out.println("  - " + file.filename + 
-                                 " (" + formatSize(file.size) + ")" +
-                                 " [dossier: " + file.folderId + "]");
-            }
+            System.out.println("Utilisez testListRoot() pour voir l'arborescence complète");
         } catch (Exception e) {
             System.err.println("✗ Erreur: " + e.getMessage());
             e.printStackTrace();
